@@ -10,6 +10,10 @@ import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
+import javafx.scene.image.ImageView;
+import javafx.scene.layout.BorderPane;
+import javafx.scene.layout.StackPane;
+import javafx.scene.shape.Rectangle;
 import javafx.stage.Stage;
 import java.util.List;
 
@@ -23,10 +27,12 @@ public class LoginController {
     @FXML private Label titleLabel;
     @FXML private Label usernameLabel;
     @FXML private Label passwordLabel;
+
     
     @FXML
     private void initialize() {
-        updateLanguage();
+
+    updateLanguage();
     }
     
     @FXML
@@ -40,8 +46,8 @@ public class LoginController {
         }
         
         // Check admin login (hardcoded)
-        if ("Prapanna".equals(username) && "123".equals(password)) {
-            Admin admin = new Admin(username, password, "Prapanna Admin", "admin@tourism.com", "+977-9999999");
+        if ("admin".equals(username) && "123".equals(password)) {
+            Admin admin = new Admin(username, password, "admin", "admin@tourism.com", "9808829472");
             openDashboard(admin);
             return;
         }
@@ -148,7 +154,7 @@ public class LoginController {
             Scene scene = new Scene(loader.load());
             
             // Use the new scene switching method to maintain full screen
-            Main.switchScene(scene, "Journey - Create Account");
+            Main.switchScene(scene, "Himalayan Legacy - Create Account");
             
         } catch (Exception e) {
             e.printStackTrace();
@@ -173,7 +179,7 @@ public class LoginController {
     }
     
     private void updateLanguage() {
-        titleLabel.setText("Journey");
+        titleLabel.setText("Himalayan Legacy");
         usernameLabel.setText(LanguageManager.getText("Username"));
         passwordLabel.setText(LanguageManager.getText("Password"));
         loginButton.setText(LanguageManager.getText("Login"));

@@ -10,234 +10,213 @@ import javafx.fxml.FXMLLoader;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.layout.VBox;
-import javafx.stage.Stage;
 import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class RegisterController {
     @FXML private TextField usernameField;
     @FXML private PasswordField passwordField;
+    @FXML private PasswordField confirmPasswordField;
     @FXML private TextField fullNameField;
     @FXML private TextField emailField;
     @FXML private TextField phoneField;
     @FXML private ComboBox<String> roleComboBox;
-    
-    // Role-specific containers
+
     @FXML private VBox roleSpecificSection;
     @FXML private Label roleSpecificLabel;
     @FXML private VBox touristFields;
     @FXML private VBox guideFields;
-    
-    // Tourist fields
+
     @FXML private TextField nationalityField;
     @FXML private Label nationalityLabel;
-    
-    // Guide fields
-    @FXML private TextField languagesField;
+
+    @FXML private TextField languagesField;  // Changed from CheckBox container to TextField
     @FXML private TextField experienceField;
     @FXML private Label languagesLabel;
     @FXML private Label experienceLabel;
-    
+
     @FXML private Button registerButton;
     @FXML private Button backButton;
-    
+
     @FXML
     private void initialize() {
         roleComboBox.getItems().addAll("Tourist", "Guide");
         roleComboBox.setOnAction(e -> toggleRoleFields());
-        updateLanguage();
-        
-        // Initially hide role-specific section
+
+        // Set prompt text for languages field
+        languagesField.setPromptText("English, Nepali, Hindi, etc.");
+
         roleSpecificSection.setVisible(false);
         roleSpecificSection.setManaged(false);
+
+        confirmPasswordField.textProperty().addListener((obs, oldVal, newVal) -> {
+            if (!newVal.isEmpty()) {
+                if (!newVal.equals(passwordField.getText())) {
+                    confirmPasswordField.setStyle("-fx-border-color: #e74c3c; -fx-border-width: 1;");
+                    registerButton.setDisable(true);
+                } else {
+                    confirmPasswordField.setStyle("-fx-border-color: #2ecc71; -fx-border-width: 1;");
+                    registerButton.setDisable(false);
+                }
+            } else {
+                confirmPasswordField.setStyle("");
+                registerButton.setDisable(false);
+            }
+        });
+
+        updateLanguage();
     }
-    
+
     private void toggleRoleFields() {
         String selectedRole = roleComboBox.getValue();
-        
         if (selectedRole == null) {
             roleSpecificSection.setVisible(false);
             roleSpecificSection.setManaged(false);
             return;
         }
-        
-        // Show the role-specific section
+
         roleSpecificSection.setVisible(true);
         roleSpecificSection.setManaged(true);
-        
+
         boolean isTourist = "Tourist".equals(selectedRole);
         boolean isGuide = "Guide".equals(selectedRole);
-        
-        // Show/hide tourist fields
+
         touristFields.setVisible(isTourist);
         touristFields.setManaged(isTourist);
-        
-        // Show/hide guide fields
         guideFields.setVisible(isGuide);
         guideFields.setManaged(isGuide);
-        
-        // Update section label
+
         if (isTourist) {
-            roleSpecificLabel.setText("Tourist Information");
+            nationalityField.clear();
         } else if (isGuide) {
-            roleSpecificLabel.setText("Guide Information");
+            languagesField.clear();
+            experienceField.clear();
         }
+
+        roleSpecificLabel.setText(isTourist ? "Tourist Information" : "Guide Information");
     }
-    
+
     @FXML
     private void handleRegister() {
-        if (!validateFields()) {
-            return;
-        }
-        
+        if (!validateFields()) return;
+
         String username = usernameField.getText().trim();
         String password = passwordField.getText().trim();
         String fullName = fullNameField.getText().trim();
         String email = emailField.getText().trim();
         String phone = phoneField.getText().trim();
         String role = roleComboBox.getValue();
-        
-        // Check if username already exists
+
         if (isUsernameExists(username)) {
-            DialogUtils.showError("Error", "Username already exists! Please choose a different one.");
+            DialogUtils.showError("Error", "Username already exists!");
             return;
         }
-        
+
         try {
             if ("Tourist".equals(role)) {
-                String nationality = nationalityField.getText().trim();
-                Tourist tourist = new Tourist(username, password, fullName, email, phone, nationality);
+                Tourist tourist = new Tourist(username, password, fullName, email, phone,
+                        nationalityField.getText().trim());
                 FileHandler.saveTourist(tourist);
-                
-            } else if ("Guide".equals(role)) {
-                String languagesStr = languagesField.getText().trim();
+            } else {
+                List<String> selectedLanguages = parseLanguagesInput(languagesField.getText().trim());
                 int experience = Integer.parseInt(experienceField.getText().trim());
-                
-                // Parse languages - handle comma separation properly
-                List<String> languages = Arrays.asList(languagesStr.split("\\s*,\\s*"));
-                
-                Guide guide = new Guide(username, password, fullName, email, phone, languages, experience);
+
+                Guide guide = new Guide(username, password, fullName, email, phone,
+                        selectedLanguages, experience);
                 FileHandler.saveGuide(guide);
             }
-            
-            DialogUtils.showInfo("Success", "Registration successful! You can now login with your credentials.");
+
+            DialogUtils.showInfo("Success", "Registration successful!");
             handleBack();
-            
-        } catch (NumberFormatException e) {
-            DialogUtils.showError("Error", "Please enter a valid number for experience years!");
         } catch (Exception e) {
-            e.printStackTrace();
-            DialogUtils.showError("Error", "Registration failed! Please check all fields and try again.");
+            DialogUtils.showError("Error", "Registration failed: " + e.getMessage());
         }
     }
-    
+
+    private List<String> parseLanguagesInput(String input) {
+        return Arrays.stream(input.split(","))
+                .map(String::trim)
+                .filter(lang -> !lang.isEmpty())
+                .collect(Collectors.toList());
+    }
+
     private boolean validateFields() {
-        // Check basic required fields
         if (usernameField.getText().trim().isEmpty() ||
-            passwordField.getText().trim().isEmpty() ||
-            fullNameField.getText().trim().isEmpty() ||
-            emailField.getText().trim().isEmpty() ||
-            phoneField.getText().trim().isEmpty() ||
-            roleComboBox.getValue() == null) {
-            
-            DialogUtils.showError("Error", "Please fill in all required fields!");
+                passwordField.getText().trim().isEmpty() ||
+                confirmPasswordField.getText().trim().isEmpty() ||
+                fullNameField.getText().trim().isEmpty() ||
+                emailField.getText().trim().isEmpty() ||
+                phoneField.getText().trim().isEmpty() ||
+                roleComboBox.getValue() == null) {
+
+            DialogUtils.showError("Error", "Please fill all required fields!");
             return false;
         }
-        
-        // Validate email format
-        String email = emailField.getText().trim();
-        if (!email.contains("@") || !email.contains(".")) {
-            DialogUtils.showError("Error", "Please enter a valid email address!");
+
+        if (!passwordField.getText().equals(confirmPasswordField.getText())) {
+            DialogUtils.showError("Password Error", "Passwords don't match!");
             return false;
         }
-        
-        // Validate username length
+
         if (usernameField.getText().trim().length() < 3) {
-            DialogUtils.showError("Error", "Username must be at least 3 characters long!");
+            DialogUtils.showError("Error", "Username too short (min 3 chars)!");
             return false;
         }
-        
-        // Validate password length
+
         if (passwordField.getText().trim().length() < 3) {
-            DialogUtils.showError("Error", "Password must be at least 3 characters long!");
+            DialogUtils.showError("Error", "Password too short (min 3 chars)!");
             return false;
         }
-        
-        String role = roleComboBox.getValue();
-        
-        // Role-specific validation
-        if ("Tourist".equals(role)) {
-            if (nationalityField.getText().trim().isEmpty()) {
-                DialogUtils.showError("Error", "Please enter your nationality!");
-                return false;
-            }
+
+        if (!emailField.getText().trim().matches(".+@.+\\..+")) {
+            DialogUtils.showError("Error", "Invalid email format!");
+            return false;
         }
-        
+
+        String role = roleComboBox.getValue();
+        if ("Tourist".equals(role) && nationalityField.getText().trim().isEmpty()) {
+            DialogUtils.showError("Error", "Nationality required!");
+            return false;
+        }
+
         if ("Guide".equals(role)) {
-            if (languagesField.getText().trim().isEmpty()) {
-                DialogUtils.showError("Error", "Please enter the languages you speak!");
+            List<String> selectedLanguages = parseLanguagesInput(languagesField.getText().trim());
+            if (selectedLanguages.isEmpty()) {
+                DialogUtils.showError("Error", "Please enter at least one language!");
                 return false;
             }
-            
-            if (experienceField.getText().trim().isEmpty()) {
-                DialogUtils.showError("Error", "Please enter your years of experience!");
-                return false;
-            }
-            
             try {
-                int experience = Integer.parseInt(experienceField.getText().trim());
-                if (experience < 0 || experience > 50) {
-                    DialogUtils.showError("Error", "Please enter a valid experience between 0 and 50 years!");
+                int exp = Integer.parseInt(experienceField.getText().trim());
+                if (exp < 0 || exp > 50) {
+                    DialogUtils.showError("Error", "Experience must be 0-50 years!");
                     return false;
                 }
             } catch (NumberFormatException e) {
-                DialogUtils.showError("Error", "Please enter a valid number for experience years!");
+                DialogUtils.showError("Error", "Invalid experience format!");
                 return false;
             }
         }
-        
+
         return true;
     }
-    
+
     private boolean isUsernameExists(String username) {
-        // Check tourists
-        List<Tourist> tourists = FileHandler.loadTourists();
-        for (Tourist tourist : tourists) {
-            if (tourist.getUsername().equals(username)) {
-                return true;
-            }
-        }
-        
-        // Check guides
-        List<Guide> guides = FileHandler.loadGuides();
-        for (Guide guide : guides) {
-            if (guide.getUsername().equals(username)) {
-                return true;
-            }
-        }
-        
-        // Check admin username
-        if ("Prapanna".equals(username)) {
-            return true;
-        }
-        
-        return false;
+        return FileHandler.loadTourists().stream().anyMatch(t -> t.getUsername().equals(username)) ||
+                FileHandler.loadGuides().stream().anyMatch(g -> g.getUsername().equals(username)) ||
+                "admin".equals(username);
     }
-    
+
     @FXML
     private void handleBack() {
         try {
-            FXMLLoader loader = new FXMLLoader(getClass().getResource("/fxml/login.fxml"));
-            Scene scene = new Scene(loader.load());
-            
-            // Use the new scene switching method to maintain full screen
-            Main.switchScene(scene, "Journey - Nepal Tourism System");
-            
+            Main.switchScene(new Scene(FXMLLoader.load(getClass().getResource("/fxml/login.fxml"))),
+                    "Himalayan Legacy - Login");
         } catch (Exception e) {
-            e.printStackTrace();
+            DialogUtils.showError("Error", "Failed to load login screen");
         }
     }
-    
+
     private void updateLanguage() {
         registerButton.setText(LanguageManager.getText("Register"));
         backButton.setText(LanguageManager.getText("Back"));

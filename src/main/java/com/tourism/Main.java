@@ -19,7 +19,7 @@ public class Main extends Application {
         // Initialize data files
         FileHandler.initializeDataFiles();
         
-        FXMLLoader loader = new FXMLLoader(getClass().getResource("/fxml/login.fxml"));
+        FXMLLoader loader = new FXMLLoader(getClass().getResource("/fxml/guideDashboard.fxml"));
         Scene scene = new Scene(loader.load(), 1920, 1080);
         
         primaryStage.setTitle("Journey - Nepal Tourism System");

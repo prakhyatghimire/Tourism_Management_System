@@ -4,348 +4,247 @@ import com.tourism.models.*;
 import java.io.*;
 import java.time.LocalDate;
 import java.util.*;
+import java.util.stream.Collectors;
 
 public class FileHandler {
     private static final String DATA_DIR = "data/";
-    private static final String TOURISTS_FILE = DATA_DIR + "tourists.txt";
-    private static final String GUIDES_FILE = DATA_DIR + "guides.txt";
-    private static final String ATTRACTIONS_FILE = DATA_DIR + "attractions.txt";
-    private static final String BOOKINGS_FILE = DATA_DIR + "bookings.txt";
-    private static final String SEPARATOR = "------------------------";
-    
+    private static final String TOURISTS_FILE = DATA_DIR + "tourists.dat";
+    private static final String GUIDES_FILE = DATA_DIR + "guides.dat";
+    private static final String ATTRACTIONS_FILE = DATA_DIR + "attractions.dat";
+    private static final String BOOKINGS_FILE = DATA_DIR + "bookings.dat";
+    private static final String SEPARATOR = "%%%";
+
+    // Initialize data directory and default data
     public static void initializeDataFiles() {
         createDataDirectory();
-        initializeDefaultAttractions();
-        initializeDefaultGuides();
+        if (!new File(ATTRACTIONS_FILE).exists()) {
+            initializeDefaultAttractions();
+        }
+        if (!new File(GUIDES_FILE).exists()) {
+            initializeDefaultGuides();
+        }
     }
-    
+
     private static void createDataDirectory() {
         File dataDir = new File(DATA_DIR);
         if (!dataDir.exists()) {
             dataDir.mkdirs();
         }
     }
-    
-    // Tourist operations
+
+    // ================= Tourist Operations =================
     public static void saveTourist(Tourist tourist) {
-        try (FileWriter writer = new FileWriter(TOURISTS_FILE, true)) {
-            writer.write("Username: " + tourist.getUsername() + "\n");
-            writer.write("Password: " + tourist.getPassword() + "\n");
-            writer.write("Full Name: " + tourist.getFullName() + "\n");
-            writer.write("Email: " + tourist.getEmail() + "\n");
-            writer.write("Phone: " + tourist.getPhone() + "\n");
-            writer.write("Nationality: " + tourist.getNationality() + "\n");
-            writer.write("Role: Tourist\n");
-            writer.write("Total Spent: " + tourist.getTotalSpent() + "\n");
-            writer.write(SEPARATOR + "\n");
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+        List<Tourist> tourists = loadTourists();
+        tourists.removeIf(t -> t.getUsername().equals(tourist.getUsername()));
+        tourists.add(tourist);
+        saveAllTourists(tourists);
     }
-    
+
     public static List<Tourist> loadTourists() {
         List<Tourist> tourists = new ArrayList<>();
-        try (BufferedReader reader = new BufferedReader(new FileReader(TOURISTS_FILE))) {
-            String line;
-            Map<String, String> data = new HashMap<>();
-            
-            while ((line = reader.readLine()) != null) {
-                if (line.equals(SEPARATOR)) {
-                    if (!data.isEmpty()) {
-                        Tourist tourist = new Tourist(
-                            data.get("Username"),
-                            data.get("Password"),
-                            data.get("Full Name"),
-                            data.get("Email"),
-                            data.get("Phone"),
-                            data.get("Nationality")
-                        );
-                        // After creating the tourist, set the total spent if available
-                        if (data.containsKey("Total Spent")) {
-                            try {
-                                double spent = Double.parseDouble(data.get("Total Spent"));
-                                tourist.setTotalSpent(spent);
-                            } catch (NumberFormatException e) {
-                                System.err.println("Error parsing tourist spending: " + e.getMessage());
-                            }
-                        }
-                        tourists.add(tourist);
-                        data.clear();
-                    }
-                } else if (line.contains(": ")) {
-                    String[] parts = line.split(": ", 2);
-                    data.put(parts[0], parts[1]);
-                }
-            }
-        } catch (IOException e) {
-            // File doesn't exist yet, return empty list
+        if (!new File(TOURISTS_FILE).exists()) {
+            return tourists;
+        }
+
+        try (ObjectInputStream ois = new ObjectInputStream(new FileInputStream(TOURISTS_FILE))) {
+            tourists = (List<Tourist>) ois.readObject();
+        } catch (Exception e) {
+            System.err.println("Error loading tourists: " + e.getMessage());
         }
         return tourists;
     }
 
-    // Method to save all tourists (overwrite existing file)
-    public static void saveAllTourists(List<Tourist> tourists) {
-        try (FileWriter writer = new FileWriter(TOURISTS_FILE)) {
-            for (Tourist tourist : tourists) {
-                writer.write("Username: " + tourist.getUsername() + "\n");
-                writer.write("Password: " + tourist.getPassword() + "\n");
-                writer.write("Full Name: " + tourist.getFullName() + "\n");
-                writer.write("Email: " + tourist.getEmail() + "\n");
-                writer.write("Phone: " + tourist.getPhone() + "\n");
-                writer.write("Nationality: " + tourist.getNationality() + "\n");
-                writer.write("Role: Tourist\n");
-                writer.write("Total Spent: " + tourist.getTotalSpent() + "\n");
-                writer.write(SEPARATOR + "\n");
-            }
-        } catch (IOException e) {
-            e.printStackTrace();
+    private static void saveAllTourists(List<Tourist> tourists) {
+        try (ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(TOURISTS_FILE))) {
+            oos.writeObject(tourists);
+        } catch (Exception e) {
+            System.err.println("Error saving tourists: " + e.getMessage());
         }
     }
-    
-    // Guide operations
+
+    // ================= Guide Operations =================
     public static void saveGuide(Guide guide) {
-        try (FileWriter writer = new FileWriter(GUIDES_FILE, true)) {
-            writer.write("Username: " + guide.getUsername() + "\n");
-            writer.write("Password: " + guide.getPassword() + "\n");
-            writer.write("Full Name: " + guide.getFullName() + "\n");
-            writer.write("Email: " + guide.getEmail() + "\n");
-            writer.write("Phone: " + guide.getPhone() + "\n");
-            writer.write("Languages: " + String.join(", ", guide.getLanguages()) + "\n");
-            writer.write("Experience: " + guide.getExperienceYears() + "\n");
-            writer.write("Role: Guide\n");
-            writer.write("Total Earnings: " + guide.getTotalEarnings() + "\n");
-            writer.write(SEPARATOR + "\n");
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+        List<Guide> guides = loadGuides();
+        guides.removeIf(g -> g.getUsername().equals(guide.getUsername()));
+        guides.add(guide);
+        saveAllGuides(guides);
     }
-    
+
     public static List<Guide> loadGuides() {
         List<Guide> guides = new ArrayList<>();
-        try (BufferedReader reader = new BufferedReader(new FileReader(GUIDES_FILE))) {
-            String line;
-            Map<String, String> data = new HashMap<>();
-            
-            while ((line = reader.readLine()) != null) {
-                if (line.equals(SEPARATOR)) {
-                    if (!data.isEmpty() && data.containsKey("Languages") && data.containsKey("Experience")) {
-                        try {
-                            List<String> languages = Arrays.asList(data.get("Languages").split("\\s*,\\s*"));
-                            int experience = Integer.parseInt(data.get("Experience"));
-                            
-                            Guide guide = new Guide(
-                                data.get("Username"),
-                                data.get("Password"),
-                                data.get("Full Name"),
-                                data.get("Email"),
-                                data.get("Phone"),
-                                languages,
-                                experience
-                            );
-                            // After creating the guide, set the total earnings if available
-                            if (data.containsKey("Total Earnings")) {
-                                try {
-                                    double earnings = Double.parseDouble(data.get("Total Earnings"));
-                                    guide.setTotalEarnings(earnings);
-                                } catch (NumberFormatException e) {
-                                    System.err.println("Error parsing guide earnings: " + e.getMessage());
-                                }
-                            }
-                            guides.add(guide);
-                        } catch (NumberFormatException e) {
-                            System.err.println("Error parsing guide experience: " + e.getMessage());
-                        }
-                        data.clear();
-                    }
-                } else if (line.contains(": ")) {
-                    String[] parts = line.split(": ", 2);
-                    if (parts.length == 2) {
-                        data.put(parts[0], parts[1]);
-                    }
-                }
-            }
-        } catch (IOException e) {
-            // File doesn't exist yet, return empty list
-            System.out.println("Guides file not found, returning empty list");
+        if (!new File(GUIDES_FILE).exists()) {
+            return guides;
+        }
+
+        try (ObjectInputStream ois = new ObjectInputStream(new FileInputStream(GUIDES_FILE))) {
+            guides = (List<Guide>) ois.readObject();
+        } catch (Exception e) {
+            System.err.println("Error loading guides: " + e.getMessage());
         }
         return guides;
     }
 
-    // Method to save all guides (overwrite existing file)
     public static void saveAllGuides(List<Guide> guides) {
-        try (FileWriter writer = new FileWriter(GUIDES_FILE)) {
-            for (Guide guide : guides) {
-                writer.write("Username: " + guide.getUsername() + "\n");
-                writer.write("Password: " + guide.getPassword() + "\n");
-                writer.write("Full Name: " + guide.getFullName() + "\n");
-                writer.write("Email: " + guide.getEmail() + "\n");
-                writer.write("Phone: " + guide.getPhone() + "\n");
-                writer.write("Languages: " + String.join(", ", guide.getLanguages()) + "\n");
-                writer.write("Experience: " + guide.getExperienceYears() + "\n");
-                writer.write("Role: Guide\n");
-                writer.write("Total Earnings: " + guide.getTotalEarnings() + "\n");
-                writer.write(SEPARATOR + "\n");
-            }
-        } catch (IOException e) {
-            e.printStackTrace();
+        try (ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(GUIDES_FILE))) {
+            oos.writeObject(guides);
+        } catch (Exception e) {
+            System.err.println("Error saving guides: " + e.getMessage());
         }
     }
-    
-    // Attraction operations
+
+    // ================= Attraction Operations =================
     public static void saveAttraction(Attraction attraction) {
         List<Attraction> attractions = loadAttractions();
+        attractions.removeIf(a -> a.getName().equals(attraction.getName()));
         attractions.add(attraction);
         saveAllAttractions(attractions);
     }
-    
+
     public static List<Attraction> loadAttractions() {
         List<Attraction> attractions = new ArrayList<>();
-        try (BufferedReader reader = new BufferedReader(new FileReader(ATTRACTIONS_FILE))) {
-            String line;
-            Map<String, String> data = new HashMap<>();
-            
-            while ((line = reader.readLine()) != null) {
-                if (line.equals(SEPARATOR)) {
-                    if (!data.isEmpty()) {
-                        Attraction attraction = new Attraction(
-                            data.get("Name"),
-                            data.get("Location"),
-                            data.get("Altitude"),
-                            data.get("Difficulty"),
-                            Double.parseDouble(data.get("Base Price"))
-                        );
-                        attractions.add(attraction);
-                        data.clear();
-                    }
-                } else if (line.contains(": ")) {
-                    String[] parts = line.split(": ", 2);
-                    data.put(parts[0], parts[1]);
-                }
-            }
-        } catch (IOException e) {
-            // File doesn't exist yet, return empty list
+        if (!new File(ATTRACTIONS_FILE).exists()) {
+            return attractions;
+        }
+
+        try (ObjectInputStream ois = new ObjectInputStream(new FileInputStream(ATTRACTIONS_FILE))) {
+            attractions = (List<Attraction>) ois.readObject();
+        } catch (Exception e) {
+            System.err.println("Error loading attractions: " + e.getMessage());
         }
         return attractions;
     }
-    
+
     private static void saveAllAttractions(List<Attraction> attractions) {
-        try (FileWriter writer = new FileWriter(ATTRACTIONS_FILE)) {
-            for (Attraction attraction : attractions) {
-                writer.write("Name: " + attraction.getName() + "\n");
-                writer.write("Location: " + attraction.getLocation() + "\n");
-                writer.write("Altitude: " + attraction.getAltitudeLevel() + "\n");
-                writer.write("Difficulty: " + attraction.getDifficulty() + "\n");
-                writer.write("Base Price: " + attraction.getBasePrice() + "\n");
-                writer.write(SEPARATOR + "\n");
-            }
-        } catch (IOException e) {
-            e.printStackTrace();
+        try (ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(ATTRACTIONS_FILE))) {
+            oos.writeObject(attractions);
+        } catch (Exception e) {
+            System.err.println("Error saving attractions: " + e.getMessage());
         }
     }
-    
-    // Booking operations
+
+    // ================= Booking Operations =================
     public static void saveBooking(Booking booking) {
-        try (FileWriter writer = new FileWriter(BOOKINGS_FILE, true)) {
-            writer.write("Booking ID: " + booking.getBookingId() + "\n");
-            writer.write("Tourist: " + booking.getTouristUsername() + "\n");
-            writer.write("Guide: " + booking.getGuideUsername() + "\n");
-            writer.write("Attraction: " + booking.getAttraction().getName() + "\n");
-            writer.write("Trek Date: " + booking.getTrekDate() + "\n");
-            writer.write("Status: " + booking.getStatus() + "\n");
-            writer.write("Total Price: " + booking.getTotalPrice() + "\n");
-            writer.write("Festival Discount: " + booking.isFestivalDiscountApplied() + "\n");
-            writer.write(SEPARATOR + "\n");
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+        List<Booking> bookings = loadBookings();
+        bookings.removeIf(b -> b.getBookingId() == booking.getBookingId());
+        bookings.add(booking);
+        saveAllBookings(bookings);
     }
-    
+
     public static List<Booking> loadBookings() {
         List<Booking> bookings = new ArrayList<>();
-        List<Attraction> attractions = loadAttractions();
-        
-        try (BufferedReader reader = new BufferedReader(new FileReader(BOOKINGS_FILE))) {
-            String line;
-            Map<String, String> data = new HashMap<>();
-            
-            while ((line = reader.readLine()) != null) {
-                if (line.equals(SEPARATOR)) {
-                    if (!data.isEmpty()) {
-                        // Find the attraction
-                        Attraction attraction = attractions.stream()
-                            .filter(a -> a.getName().equals(data.get("Attraction")))
+        if (!new File(BOOKINGS_FILE).exists()) {
+            return bookings;
+        }
+
+        try (ObjectInputStream ois = new ObjectInputStream(new FileInputStream(BOOKINGS_FILE))) {
+            List<BookingData> bookingDataList = (List<BookingData>) ois.readObject();
+
+            // Convert BookingData to Booking objects
+            List<Attraction> attractions = loadAttractions();
+            List<Guide> guides = loadGuides();
+
+            for (BookingData data : bookingDataList) {
+                Attraction attraction = attractions.stream()
+                        .filter(a -> a.getName().equals(data.attractionName))
+                        .findFirst()
+                        .orElse(null);
+
+                if (attraction == null) {
+                    System.err.println("Attraction not found: " + data.attractionName);
+                    continue;
+                }
+
+                Booking booking = new Booking(
+                        data.touristUsername,
+                        attraction,
+                        data.trekDate
+                );
+                booking.setBookingId(data.bookingId);
+                booking.setStatus(data.status);
+                booking.setTotalPrice(data.totalPrice);
+                booking.setFestivalDiscountApplied(data.festivalDiscountApplied);
+
+                if (data.guideUsername != null && !data.guideUsername.isEmpty()) {
+                    Guide guide = guides.stream()
+                            .filter(g -> g.getUsername().equals(data.guideUsername))
                             .findFirst()
                             .orElse(null);
-                        
-                        if (attraction != null) {
-                            Booking booking = new Booking(
-                                data.get("Tourist"),
-                                attraction,
-                                LocalDate.parse(data.get("Trek Date"))
-                            );
-                            booking.setGuideUsername(data.get("Guide"));
-                            booking.setStatus(data.get("Status"));
-                            bookings.add(booking);
-                        }
-                        data.clear();
-                    }
-                } else if (line.contains(": ")) {
-                    String[] parts = line.split(": ", 2);
-                    data.put(parts[0], parts[1]);
+                    booking.setGuide(guide);
                 }
+
+                bookings.add(booking);
             }
-        } catch (IOException e) {
-            // File doesn't exist yet, return empty list
+        } catch (Exception e) {
+            System.err.println("Error loading bookings: " + e.getMessage());
         }
         return bookings;
     }
 
-    // Method to save all bookings (overwrite existing file)
     public static void saveAllBookings(List<Booking> bookings) {
-        try (FileWriter writer = new FileWriter(BOOKINGS_FILE)) {
-            for (Booking booking : bookings) {
-                writer.write("Booking ID: " + booking.getBookingId() + "\n");
-                writer.write("Tourist: " + booking.getTouristUsername() + "\n");
-                writer.write("Guide: " + booking.getGuideUsername() + "\n");
-                writer.write("Attraction: " + booking.getAttraction().getName() + "\n");
-                writer.write("Trek Date: " + booking.getTrekDate() + "\n");
-                writer.write("Status: " + booking.getStatus() + "\n");
-                writer.write("Total Price: " + booking.getTotalPrice() + "\n");
-                writer.write("Festival Discount: " + booking.isFestivalDiscountApplied() + "\n");
-                writer.write(SEPARATOR + "\n");
-            }
-        } catch (IOException e) {
-            e.printStackTrace();
+        // Convert to BookingData for serialization
+        List<BookingData> bookingDataList = bookings.stream()
+                .map(b -> new BookingData(
+                        b.getBookingId(),
+                        b.getTouristUsername(),
+                        b.getGuide() != null ? b.getGuide().getUsername() : null,
+                        b.getAttraction().getName(),
+                        b.getTrekDate(),
+                        b.getStatus(),
+                        b.getTotalPrice(),
+                        b.isFestivalDiscountApplied()
+                ))
+                .collect(Collectors.toList());
+
+        try (ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(BOOKINGS_FILE))) {
+            oos.writeObject(bookingDataList);
+        } catch (Exception e) {
+            System.err.println("Error saving bookings: " + e.getMessage());
         }
     }
-    
-    // Initialize default data
+
+    // Helper class for booking serialization
+    private static class BookingData implements Serializable {
+        private static final long serialVersionUID = 1L;
+        int bookingId;
+        String touristUsername;
+        String guideUsername;
+        String attractionName;
+        LocalDate trekDate;
+        String status;
+        double totalPrice;
+        boolean festivalDiscountApplied;
+
+        public BookingData(int bookingId, String touristUsername, String guideUsername,
+                           String attractionName, LocalDate trekDate, String status,
+                           double totalPrice, boolean festivalDiscountApplied) {
+            this.bookingId = bookingId;
+            this.touristUsername = touristUsername;
+            this.guideUsername = guideUsername;
+            this.attractionName = attractionName;
+            this.trekDate = trekDate;
+            this.status = status;
+            this.totalPrice = totalPrice;
+            this.festivalDiscountApplied = festivalDiscountApplied;
+        }
+    }
+
+    // ================= Default Data Initialization =================
     private static void initializeDefaultAttractions() {
-        File file = new File(ATTRACTIONS_FILE);
-        if (!file.exists()) {
-            List<Attraction> defaultAttractions = Arrays.asList(
+        List<Attraction> defaultAttractions = Arrays.asList(
                 new Attraction("Everest Base Camp", "Khumbu", "High", "Hard", 1200.0),
                 new Attraction("Annapurna Circuit", "Annapurna", "High", "Medium", 800.0),
-                new Attraction("Langtang Valley", "Langtang", "High", "Medium", 600.0),
-                new Attraction("Chitwan Safari", "Chitwan", "Low", "Easy", 300.0),
-                new Attraction("Pokhara Sightseeing", "Pokhara", "Low", "Easy", 150.0),
-                new Attraction("Manaslu Circuit", "Manaslu", "High", "Hard", 1000.0)
-            );
-            saveAllAttractions(defaultAttractions);
-        }
+                new Attraction("Pokhara Sightseeing", "Pokhara", "Low", "Easy", 150.0)
+        );
+        saveAllAttractions(defaultAttractions);
     }
-    
+
     private static void initializeDefaultGuides() {
-        File file = new File(GUIDES_FILE);
-        if (!file.exists()) {
-            List<String> languages1 = Arrays.asList("English", "Nepali", "Hindi");
-            List<String> languages2 = Arrays.asList("English", "Nepali");
-            
-            Guide guide1 = new Guide("ram_guide", "ram123", "Ram Bahadur", "ram@guide.com", "+977-1234567", languages1, 8);
-            Guide guide2 = new Guide("sita_guide", "sita123", "Sita Sharma", "sita@guide.com", "+977-7654321", languages2, 5);
-            
-            saveGuide(guide1);
-            saveGuide(guide2);
-        }
+        List<Guide> defaultGuides = Arrays.asList(
+                new Guide("guide1", "password", "Ram Sharma", "ram@guide.com", "1234567890",
+                        Arrays.asList("English", "Nepali"), 5),
+                new Guide("guide2", "password", "Sita Gurung", "sita@guide.com", "9876543210",
+                        Arrays.asList("English", "Hindi"), 3)
+        );
+        saveAllGuides(defaultGuides);
     }
 }

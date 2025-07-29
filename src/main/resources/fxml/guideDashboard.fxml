@@ -2,115 +2,147 @@
 
 <?import javafx.geometry.Insets?>
 <?import javafx.scene.control.*?>
+<?import javafx.scene.image.Image?>
+<?import javafx.scene.image.ImageView?>
 <?import javafx.scene.layout.*?>
-<?import javafx.scene.text.*?>
+<?import javafx.scene.text.Font?>
 
-<BorderPane xmlns="http://javafx.com/javafx/11.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.tourism.controllers.GuideDashboardController">
+<BorderPane xmlns="http://javafx.com/javafx/11.0.1"
+            xmlns:fx="http://javafx.com/fxml/1"
+            fx:controller="com.tourism.controllers.GuideDashboardController">
+
+   <!-- TOP -->
    <top>
       <VBox style="-fx-background-color: linear-gradient(to right, #FF8C00, #FFD700);">
          <children>
-            <HBox alignment="CENTER_LEFT" spacing="20.0">
-               <padding>
-                  <Insets bottom="10.0" left="20.0" right="20.0" top="10.0" />
-               </padding>
+            <HBox alignment="CENTER_LEFT" spacing="15">
+               <padding><Insets top="10" right="20" bottom="10" left="20"/></padding>
                <children>
+                  <!-- Profile Picture -->
+                  <VBox spacing="5" alignment="CENTER">
+                     <ImageView fx:id="profileImageView" fitHeight="60" fitWidth="60" preserveRatio="true">
+                        <image>
+                           <Image url="@/images/pfp.jpeg"/>
+                        </image>
+                     </ImageView>
+                     <Button fx:id="changeProfilePictureButton" text="Change" maxWidth="70"
+                             onAction="#handleChangeProfilePicture"/>
+                  </VBox>
+
+                  <!-- Welcome -->
                   <Label fx:id="welcomeLabel" text="Welcome Guide!" textFill="WHITE">
-                     <font>
-                        <Font name="System Bold" size="18.0" />
-                     </font>
+                     <font><Font name="System Bold" size="18"/></font>
                   </Label>
-                  <Region HBox.hgrow="ALWAYS" />
-                  <Button fx:id="refreshButton" onAction="#handleRefresh" style="-fx-background-color: white; -fx-text-fill: #FF8C00;" text="Refresh" />
-                  <Button fx:id="languageToggleButton" onAction="#toggleLanguage" style="-fx-background-color: white; -fx-text-fill: #FF8C00;" text="English" />
-                  <Button fx:id="logoutButton" onAction="#handleLogout" style="-fx-background-color: #FF6347; -fx-text-fill: white;" text="Logout" />
+
+                  <Region HBox.hgrow="ALWAYS"/>
+                  <Button fx:id="refreshButton" onAction="#handleRefresh" text="⟳ Refresh"
+                          style="-fx-background-color: white; -fx-text-fill: #FF8C00;"/>
+                  <Button fx:id="languageToggleButton" onAction="#toggleLanguage" text="🌐 English"
+                          style="-fx-background-color: white; -fx-text-fill: #FF8C00;"/>
+                  <Button fx:id="logoutButton" onAction="#handleLogout" text="⎋ Logout"
+                          style="-fx-background-color: #FF6347; -fx-text-fill: white;"/>
                </children>
             </HBox>
-            <Label fx:id="dashboardInfoLabel" text="Dashboard Info" textFill="WHITE">
-               <padding>
-                  <Insets bottom="10.0" left="20.0" right="20.0" />
-               </padding>
+
+            <!-- Dashboard Info -->
+            <Label fx:id="dashboardInfoLabel" text="📊 Dashboard Info" textFill="WHITE">
+               <padding><Insets bottom="10" left="20" right="20"/></padding>
             </Label>
          </children>
       </VBox>
    </top>
-   
+
+   <!-- CENTER -->
    <center>
       <TabPane tabClosingPolicy="UNAVAILABLE">
          <tabs>
-            <Tab text="Profile &amp; Earnings">
+
+            <!-- PROFILE TAB -->
+            <Tab text="👤 Profile  Earnings">
                <content>
-                  <VBox spacing="20.0">
-                     <padding>
-                        <Insets bottom="20.0" left="20.0" right="20.0" top="20.0" />
-                     </padding>
+                  <VBox spacing="20">
+                     <padding><Insets top="20" right="20" bottom="20" left="20"/></padding>
                      <children>
-                        <Label text="Guide Profile Information">
-                           <font>
-                              <Font name="System Bold" size="16.0" />
-                           </font>
+
+                        <Label text="Guide Profile">
+                           <font><Font name="System Bold" size="16"/></font>
                         </Label>
-                        
-                        <VBox spacing="10.0" style="-fx-background-color: #FFF8DC; -fx-padding: 15; -fx-background-radius: 10;">
-                           <children>
-                              <Label fx:id="earningsLabel" text="Total Earnings: $0.00">
-                                 <font>
-                                    <Font name="System Bold" size="14.0" />
-                                 </font>
-                              </Label>
-                              <Label fx:id="languagesLabel" text="Languages: " />
-                              <Label fx:id="experienceLabel" text="Experience: " />
-                           </children>
+
+                        <!-- Bio Section -->
+                        <VBox spacing="10" style="-fx-background-color: #f4f4f4; -fx-padding: 15; -fx-background-radius: 10;">
+                           <Label text="📝 Bio:" />
+                           <TextArea fx:id="bioTextArea" promptText="Tell us something about yourself..."
+                                     wrapText="true" prefRowCount="3"/>
+                           <HBox spacing="10">
+                              <Button fx:id="editBioButton" text="✏️ Edit" onAction="#handleEditBio"/>
+                              <Button fx:id="saveBioButton" text="💾 Save" onAction="#handleSaveBio" visible="false"/>
+                              <Button fx:id="cancelBioButton" text="✖ Cancel" onAction="#handleCancelBio" visible="false"/>
+                              <Button fx:id="deleteBioButton" text="🗑 Delete" onAction="#handleDeleteBio" style="-fx-text-fill: red;"/>
+                           </HBox>
                         </VBox>
+
+                        <!-- Earning Summary -->
+                        <Label text="💰 Earnings Summary">
+                           <font><Font name="System Bold" size="14"/></font>
+                        </Label>
+
+                        <HBox spacing="20">
+                           <VBox spacing="10" style="-fx-background-color: #FFF8DC; -fx-padding: 15; -fx-background-radius: 10;" prefWidth="200">
+                              <Label fx:id="earningsLabel" text="Total: $0.00"/>
+                           </VBox>
+                           <VBox spacing="10" style="-fx-background-color: #e6ffe6; -fx-padding: 15; -fx-background-radius: 10;" prefWidth="200">
+                              <Label fx:id="languagesLabel" text="Languages: "/>
+                           </VBox>
+                           <VBox spacing="10" style="-fx-background-color: #e0f0ff; -fx-padding: 15; -fx-background-radius: 10;" prefWidth="200">
+                              <Label fx:id="experienceLabel" text="Experience: "/>
+                           </VBox>
+                        </HBox>
+
                      </children>
                   </VBox>
                </content>
             </Tab>
-            
-            <Tab text="Upcoming Treks">
+
+            <!-- TREKS TAB -->
+            <Tab text="⛰️ Upcoming Treks">
                <content>
-                  <VBox spacing="15.0">
-                     <padding>
-                        <Insets bottom="20.0" left="20.0" right="20.0" top="20.0" />
-                     </padding>
+                  <VBox spacing="15">
+                     <padding><Insets top="20" right="20" bottom="20" left="20"/></padding>
                      <children>
-                        <Label text="Your Assigned Treks">
-                           <font>
-                              <Font name="System Bold" size="16.0" />
-                           </font>
+                        <Label text="🧭 Your Assigned Treks">
+                           <font><Font name="System Bold" size="16"/></font>
                         </Label>
-                        
-                        <TableView fx:id="upcomingTreksTable" prefHeight="300.0">
+                        <TableView fx:id="upcomingTreksTable" prefHeight="300">
                            <columns>
-                              <TableColumn fx:id="bookingIdColumn" prefWidth="80.0" text="Booking ID" />
-                              <TableColumn fx:id="touristColumn" prefWidth="150.0" text="Tourist" />
-                              <TableColumn fx:id="attractionColumn" prefWidth="200.0" text="Trek/Attraction" />
-                              <TableColumn fx:id="dateColumn" prefWidth="120.0" text="Date" />
-                              <TableColumn fx:id="difficultyColumn" prefWidth="100.0" text="Difficulty" />
+                              <TableColumn fx:id="bookingIdColumn" prefWidth="80" text="Booking ID"/>
+                              <TableColumn fx:id="touristColumn" prefWidth="150" text="Tourist"/>
+                              <TableColumn fx:id="attractionColumn" prefWidth="200" text="Trek/Attraction"/>
+                              <TableColumn fx:id="dateColumn" prefWidth="120" text="Date"/>
+                              <TableColumn fx:id="difficultyColumn" prefWidth="100" text="Difficulty"/>
                            </columns>
                         </TableView>
                      </children>
                   </VBox>
                </content>
             </Tab>
-            
-            <Tab text="Important Updates">
+
+            <!-- UPDATES TAB -->
+            <Tab text="⚠️ Important Updates">
                <content>
-                  <VBox spacing="15.0">
-                     <padding>
-                        <Insets bottom="20.0" left="20.0" right="20.0" top="20.0" />
-                     </padding>
+                  <VBox spacing="15">
+                     <padding><Insets top="20" right="20" bottom="20" left="20"/></padding>
                      <children>
-                        <Label text="Weather Alerts &amp; Safety Updates">
-                           <font>
-                              <Font name="System Bold" size="16.0" />
-                           </font>
+                        <Label text="🌦️ Weather Alerts  Safety Updates">
+                           <font><Font name="System Bold" size="16"/></font>
                         </Label>
-                        
-                        <TextArea fx:id="updatesTextArea" prefHeight="400.0" style="-fx-background-color: #FFFACD;" wrapText="true" />
+                        <TextArea fx:id="updatesTextArea" wrapText="true" prefHeight="400"
+                                  style="-fx-background-color: #FFFACD;"/>
                      </children>
                   </VBox>
                </content>
             </Tab>
+
+
          </tabs>
       </TabPane>
    </center>

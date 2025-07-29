@@ -13,13 +13,19 @@ import javafx.fxml.Initializable;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
+import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
+import javafx.stage.FileChooser;
 import javafx.stage.Stage;
+
+import java.io.File;
 import java.net.URL;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.ResourceBundle;
 
 public class GuideDashboardController implements Initializable {
+    // UI Components
     @FXML private Label welcomeLabel;
     @FXML private Label dashboardInfoLabel;
     @FXML private Label earningsLabel;
@@ -35,18 +41,33 @@ public class GuideDashboardController implements Initializable {
     @FXML private Button languageToggleButton;
     @FXML private Button logoutButton;
     @FXML private Button refreshButton;
-    
+    @FXML private ImageView profileImageView;
+    @FXML private Button changeProfilePictureButton;
+    @FXML private TextArea bioTextArea;
+    @FXML private Button editBioButton;
+    @FXML private Button saveBioButton;
+    @FXML private Button cancelBioButton;
+    @FXML private Button deleteBioButton;
+
+    // Data fields
     private Guide currentUser;
     private ObservableList<Booking> assignedBookings;
-    
+    private String originalBio;
+
     @Override
     public void initialize(URL location, ResourceBundle resources) {
-        System.out.println("GuideDashboardController initialize() called");
         setupTableColumns();
         loadImportantUpdates();
         updateLanguage();
-        
-        // Initialize with default values
+        initializeUIComponents();
+    }
+
+    public void setCurrentUser(Guide user) {
+        this.currentUser = user;
+        initializeDashboard();
+    }
+
+    private void initializeUIComponents() {
         if (welcomeLabel != null) {
             welcomeLabel.setText("Welcome Guide!");
         }
@@ -62,253 +83,250 @@ public class GuideDashboardController implements Initializable {
         if (experienceLabel != null) {
             experienceLabel.setText("Experience: Loading...");
         }
+        if (saveBioButton != null) saveBioButton.setVisible(false);
+        if (cancelBioButton != null) cancelBioButton.setVisible(false);
     }
-    
-    public void setCurrentUser(Guide user) {
-        System.out.println("Setting current user: " + user.getFullName());
-        this.currentUser = user;
-        initializeDashboard();
-    }
-    
+
     private void initializeDashboard() {
         try {
-            if (currentUser == null) {
-                System.err.println("Current user is null!");
-                return;
-            }
-        
-            System.out.println("Initializing guide dashboard for: " + currentUser.getFullName());
-        
-            // First load the latest guide data from file
+            if (currentUser == null) return;
+
+            // Load latest guide data
             List<Guide> allGuides = FileHandler.loadGuides();
             Guide latestGuideData = allGuides.stream()
-                .filter(g -> g.getUsername().equals(currentUser.getUsername()))
-                .findFirst()
-                .orElse(null);
-        
-            if (latestGuideData != null) {
-                currentUser.setTotalEarnings(latestGuideData.getTotalEarnings());
-                System.out.println("Loaded latest earnings: $" + currentUser.getTotalEarnings());
-            }
-        
-            // Display user info using polymorphism
+                    .filter(g -> g.getUsername().equals(currentUser.getUsername()))
+                    .findFirst()
+                    .orElse(currentUser); // Fallback to current user if not found
+
+            currentUser = latestGuideData; // Update with latest data
+
+            // Update UI with user info
             if (welcomeLabel != null) {
                 welcomeLabel.setText(LanguageManager.getText("Welcome") + ", " + currentUser.getFullName() + "!");
             }
-        
+
             if (dashboardInfoLabel != null) {
                 dashboardInfoLabel.setText(currentUser.getDashboardInfo());
             }
-        
-            // Display specific guide information
+
             if (earningsLabel != null) {
                 earningsLabel.setText("Total Earnings: $" + String.format("%.2f", currentUser.getTotalEarnings()));
             }
-        
+
             if (languagesLabel != null) {
                 languagesLabel.setText("Languages: " + currentUser.getLanguagesString());
             }
-        
+
             if (experienceLabel != null) {
                 experienceLabel.setText("Experience: " + currentUser.getExperienceYears() + " years");
             }
-        
-            // Load assigned bookings
+
+            // Load profile picture if exists
+            if (currentUser.getProfileImagePath() != null && !currentUser.getProfileImagePath().isEmpty()) {
+                try {
+                    File file = new File(currentUser.getProfileImagePath());
+                    if (file.exists()) {
+                        Image image = new Image(file.toURI().toString());
+                        profileImageView.setImage(image);
+                    }
+                } catch (Exception e) {
+                    System.err.println("Error loading profile image: " + e.getMessage());
+                }
+            }
+
+            // Load data
             loadAssignedBookings();
-        
-            System.out.println("Guide dashboard initialized successfully");
-            System.out.println("Final earnings display: $" + currentUser.getTotalEarnings());
-            System.out.println("Assigned bookings count: " + assignedBookings.size());
-        
+            loadBio();
+
         } catch (Exception e) {
             System.err.println("Error initializing guide dashboard: " + e.getMessage());
-            e.printStackTrace();
+            DialogUtils.showError("Error", "Failed to load guide dashboard");
         }
     }
-    
+
     private void setupTableColumns() {
         try {
-            if (bookingIdColumn != null) {
-                bookingIdColumn.setCellValueFactory(new PropertyValueFactory<>("bookingId"));
-            }
-            if (touristColumn != null) {
-                touristColumn.setCellValueFactory(new PropertyValueFactory<>("touristUsername"));
-            }
-            if (attractionColumn != null) {
-                attractionColumn.setCellValueFactory(cellData -> {
-                    if (cellData.getValue() != null && cellData.getValue().getAttraction() != null) {
-                        return new javafx.beans.property.SimpleStringProperty(cellData.getValue().getAttraction().getName());
-                    }
-                    return new javafx.beans.property.SimpleStringProperty("N/A");
-                });
-            }
-            if (dateColumn != null) {
-                dateColumn.setCellValueFactory(new PropertyValueFactory<>("trekDate"));
-            }
-            if (difficultyColumn != null) {
-                difficultyColumn.setCellValueFactory(cellData -> {
-                    if (cellData.getValue() != null && cellData.getValue().getAttraction() != null) {
-                        return new javafx.beans.property.SimpleStringProperty(cellData.getValue().getAttraction().getDifficulty());
-                    }
-                    return new javafx.beans.property.SimpleStringProperty("N/A");
-                });
-            }
+            bookingIdColumn.setCellValueFactory(new PropertyValueFactory<>("bookingId"));
+            touristColumn.setCellValueFactory(new PropertyValueFactory<>("touristUsername"));
+            attractionColumn.setCellValueFactory(cellData -> {
+                Attraction attraction = cellData.getValue().getAttraction();
+                return new javafx.beans.property.SimpleStringProperty(
+                        attraction != null ? attraction.getName() : "N/A");
+            });
+            dateColumn.setCellValueFactory(new PropertyValueFactory<>("trekDate"));
+            difficultyColumn.setCellValueFactory(cellData -> {
+                Attraction attraction = cellData.getValue().getAttraction();
+                return new javafx.beans.property.SimpleStringProperty(
+                        attraction != null ? attraction.getDifficulty() : "N/A");
+            });
         } catch (Exception e) {
             System.err.println("Error setting up table columns: " + e.getMessage());
         }
     }
-    
+
     private void loadAssignedBookings() {
         try {
-            if (currentUser == null) {
-                System.err.println("Cannot load bookings - current user is null");
-                return;
-            }
-        
-            // Reload guide data to get latest earnings
-            List<Guide> allGuides = FileHandler.loadGuides();
-            Guide updatedGuide = allGuides.stream()
-                .filter(g -> g.getUsername().equals(currentUser.getUsername()))
-                .findFirst()
-                .orElse(null);
-        
-            if (updatedGuide != null) {
-                currentUser.setTotalEarnings(updatedGuide.getTotalEarnings());
-                System.out.println("Updated guide earnings: $" + currentUser.getTotalEarnings());
-            }
-        
+            if (currentUser == null) return;
+
             List<Booking> allBookings = FileHandler.loadBookings();
-            
-            // CLEAR existing bookings to prevent duplicates
-            if (assignedBookings == null) {
-                assignedBookings = FXCollections.observableArrayList();
-            } else {
-                assignedBookings.clear(); // Clear existing bookings
-            }
-        
-            System.out.println("Loading bookings for guide: " + currentUser.getUsername());
-            System.out.println("Total bookings in system: " + allBookings.size());
-        
+            assignedBookings = FXCollections.observableArrayList();
+
             for (Booking booking : allBookings) {
-                System.out.println("Checking booking " + booking.getBookingId() + 
-                    " - Guide: '" + booking.getGuideUsername() + "' - Status: " + booking.getStatus());
-        
-                if (booking.getGuideUsername() != null && 
-                    booking.getGuideUsername().equals(currentUser.getUsername())) {
-            
+                if (currentUser.getUsername().equals(booking.getGuideUsername())) {
                     assignedBookings.add(booking);
-                    System.out.println("✓ Added assigned booking: " + booking.getBookingId() + 
-                        " for " + booking.getAttraction().getName());
                 }
             }
-        
-            if (upcomingTreksTable != null) {
-                upcomingTreksTable.setItems(assignedBookings);
-            }
-        
-            System.out.println("Loaded " + assignedBookings.size() + " assigned bookings");
-        
-            // Update earnings display with latest data
+
+            upcomingTreksTable.setItems(assignedBookings);
+
+            // Update UI
             if (earningsLabel != null) {
-                earningsLabel.setText("Total Earnings: $" + String.format("%.2f", currentUser.getTotalEarnings()));
+                earningsLabel.setText("Total Earnings: $" +
+                        String.format("%.2f", currentUser.getTotalEarnings()));
             }
-        
-            // Update dashboard info
-            if (dashboardInfoLabel != null) {
-                dashboardInfoLabel.setText(currentUser.getDashboardInfo());
-            }
-        
+
         } catch (Exception e) {
             System.err.println("Error loading assigned bookings: " + e.getMessage());
-            e.printStackTrace();
         }
     }
-    
+
+    private void loadBio() {
+        if (currentUser == null || bioTextArea == null) return;
+
+        String bio = currentUser.getBio();
+        if (bio == null || bio.isBlank()) {
+            bio = "Tell us something about yourself!";
+        }
+        bioTextArea.setText(bio);
+        bioTextArea.setEditable(false);
+        originalBio = bio;
+
+        if (saveBioButton != null) saveBioButton.setVisible(false);
+        if (cancelBioButton != null) cancelBioButton.setVisible(false);
+    }
+
     private void loadImportantUpdates() {
         try {
             StringBuilder updates = new StringBuilder();
-            updates.append("🌦️ WEATHER ALERTS:\n");
-            updates.append("• Heavy snow expected on Everest Base Camp trek (Next 3 days)\n");
-            updates.append("• Clear weather forecast for Annapurna Circuit\n");
-            updates.append("• Monsoon season ending - Good trekking conditions ahead\n\n");
-            
-            updates.append("⚠️ SAFETY NOTICES:\n");
-            updates.append("• Altitude sickness precautions for high-altitude treks\n");
-            updates.append("• Emergency helicopter services available 24/7\n");
-            updates.append("• Carry proper gear and first aid supplies\n\n");
-            
-            updates.append("📢 IMPORTANT ANNOUNCEMENTS:\n");
-            updates.append("• Festival season discounts active (August-October)\n");
-            updates.append("• New safety protocols for COVID-19\n");
-            updates.append("• Guide training workshop scheduled next month\n");
-            
-            if (updatesTextArea != null) {
-                updatesTextArea.setText(updates.toString());
-                updatesTextArea.setEditable(false);
-            }
+            updates.append("🌤️ WEATHER :\n");
+            updates.append("• Clear skies expected across trekking regions\n");
+            updates.append("• Mild snowfall forecast above 4,500m\n\n");
+
+            updates.append("⚠️ SAFETY GUIDELINES:\n");
+            updates.append("• Carry altitude sickness medication\n");
+            updates.append("• Check-in twice daily\n\n");
+
+            updates.append("📢 GUIDE ANNOUNCEMENTS:\n");
+            updates.append("• Certification renewal deadline approaching\n");
+
+            updatesTextArea.setText(updates.toString());
+            updatesTextArea.setEditable(false);
         } catch (Exception e) {
             System.err.println("Error loading updates: " + e.getMessage());
         }
     }
-    
+
+    // ===== Event Handlers =====
+    @FXML
+    private void handleEditBio() {
+        bioTextArea.setEditable(true);
+        saveBioButton.setVisible(true);
+        cancelBioButton.setVisible(true);
+    }
+
+    @FXML
+    private void handleSaveBio() {
+        currentUser.setBio(bioTextArea.getText());
+        bioTextArea.setEditable(false);
+        saveBioButton.setVisible(false);
+        cancelBioButton.setVisible(false);
+
+        // Save the updated guide
+        List<Guide> guides = FileHandler.loadGuides();
+        guides.removeIf(g -> g.getUsername().equals(currentUser.getUsername()));
+        guides.add(currentUser);
+        FileHandler.saveAllGuides(guides);
+
+        DialogUtils.showInfo("Success", "Bio updated successfully!");
+    }
+
+    @FXML
+    private void handleCancelBio() {
+        bioTextArea.setText(originalBio);
+        bioTextArea.setEditable(false);
+        saveBioButton.setVisible(false);
+        cancelBioButton.setVisible(false);
+    }
+
+    @FXML
+    private void handleDeleteBio() {
+        bioTextArea.setText("Tell us something about yourself!");
+        currentUser.setBio("");
+
+        // Save the updated guide
+        List<Guide> guides = FileHandler.loadGuides();
+        guides.removeIf(g -> g.getUsername().equals(currentUser.getUsername()));
+        guides.add(currentUser);
+        FileHandler.saveAllGuides(guides);
+    }
+
+    @FXML
+    private void handleChangeProfilePicture() {
+        FileChooser fileChooser = new FileChooser();
+        fileChooser.setTitle("Choose Profile Picture");
+        fileChooser.getExtensionFilters().addAll(
+                new FileChooser.ExtensionFilter("Image Files", "*.png", "*.jpg", "*.jpeg")
+        );
+
+        File file = fileChooser.showOpenDialog(profileImageView.getScene().getWindow());
+        if (file != null) {
+            try {
+                Image image = new Image(file.toURI().toString());
+                profileImageView.setImage(image);
+                currentUser.setProfileImagePath(file.getAbsolutePath());
+
+                // Save the updated guide
+                List<Guide> guides = FileHandler.loadGuides();
+                guides.removeIf(g -> g.getUsername().equals(currentUser.getUsername()));
+                guides.add(currentUser);
+                FileHandler.saveAllGuides(guides);
+
+                DialogUtils.showInfo("Success", "Profile picture updated!");
+            } catch (Exception e) {
+                DialogUtils.showError("Error", "Failed to update profile picture");
+            }
+        }
+    }
+
     @FXML
     private void handleRefresh() {
-        try {
-            System.out.println("Refreshing guide dashboard...");
-            
-            // Reload all data from files
-            initializeDashboard();
-            loadImportantUpdates();
-        
-            DialogUtils.showInfo("Success", "Dashboard refreshed successfully!\n" +
-                "Earnings: $" + String.format("%.2f", currentUser.getTotalEarnings()) + "\n" +
-                "Assigned Bookings: " + (assignedBookings != null ? assignedBookings.size() : 0));
-        
-        } catch (Exception e) {
-            System.err.println("Error refreshing dashboard: " + e.getMessage());
-            DialogUtils.showError("Error", "Failed to refresh dashboard");
-        }
+        initializeDashboard();
+        DialogUtils.showInfo("Refreshed", "Dashboard data updated");
     }
-    
+
     @FXML
     private void toggleLanguage() {
-        try {
-            LanguageManager.toggleLanguage();
-            updateLanguage();
-            initializeDashboard(); // Refresh dashboard with new language
-        } catch (Exception e) {
-            System.err.println("Error toggling language: " + e.getMessage());
-        }
+        LanguageManager.toggleLanguage();
+        updateLanguage();
+        initializeDashboard();
     }
-    
+
     @FXML
     private void handleLogout() {
         try {
             FXMLLoader loader = new FXMLLoader(getClass().getResource("/fxml/login.fxml"));
             Scene scene = new Scene(loader.load());
-            
-            // Use the new scene switching method to maintain full screen
             Main.switchScene(scene, "Journey - Nepal Tourism System");
-            
         } catch (Exception e) {
-            System.err.println("Error during logout: " + e.getMessage());
-            e.printStackTrace();
+            DialogUtils.showError("Error", "Failed to logout");
         }
     }
-    
+
     private void updateLanguage() {
-        try {
-            if (refreshButton != null) {
-                refreshButton.setText(LanguageManager.getText("Refresh"));
-            }
-            if (logoutButton != null) {
-                logoutButton.setText(LanguageManager.getText("Logout"));
-            }
-            if (languageToggleButton != null) {
-                languageToggleButton.setText(LanguageManager.getCurrentLanguage());
-            }
-        } catch (Exception e) {
-            System.err.println("Error updating language: " + e.getMessage());
+        if (refreshButton != null) refreshButton.setText(LanguageManager.getText("Refresh"));
+        if (logoutButton != null) logoutButton.setText(LanguageManager.getText("Logout"));
+        if (languageToggleButton != null) {
+            languageToggleButton.setText(LanguageManager.getCurrentLanguage());
         }
     }
 }

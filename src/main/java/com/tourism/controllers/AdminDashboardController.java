@@ -293,53 +293,48 @@ public class AdminDashboardController {
     private void handleAssignGuide() {
         Booking selectedBooking = bookingsTable.getSelectionModel().getSelectedItem();
         Guide selectedGuide = assignGuideCombo.getValue();
-        
+
         if (selectedBooking == null || selectedGuide == null) {
             DialogUtils.showError("Error", "Please select both booking and guide!");
             return;
         }
-        
+
         // Remove from previous guide if assigned
-        if (!selectedBooking.getGuideUsername().isEmpty()) {
-            Guide previousGuide = guides.stream()
-                .filter(g -> g.getUsername().equals(selectedBooking.getGuideUsername()))
-                .findFirst()
-                .orElse(null);
-            if (previousGuide != null) {
-                previousGuide.removeBooking(selectedBooking);
-            }
+        if (selectedBooking.getGuide() != null) {
+            Guide previousGuide = selectedBooking.getGuide();
+            previousGuide.removeBooking(selectedBooking);
         }
-        
+
         // Assign new guide
-        selectedBooking.setGuideUsername(selectedGuide.getUsername());
+        selectedBooking.setGuide(selectedGuide);
         selectedGuide.assignBooking(selectedBooking);
-        
+
         // Save all changes to files
         try {
             // Convert ObservableList to regular List for saving
             List<Booking> bookingList = new ArrayList<>(bookings);
             List<Guide> guideList = new ArrayList<>(guides);
-            
+
             FileHandler.saveAllBookings(bookingList);
             FileHandler.saveAllGuides(guideList);
-            
+
             System.out.println("Guide " + selectedGuide.getUsername() + " assigned to booking " + selectedBooking.getBookingId());
             System.out.println("Guide earnings updated: $" + selectedGuide.getTotalEarnings());
         } catch (Exception e) {
             System.err.println("Error saving guide assignment: " + e.getMessage());
             e.printStackTrace();
         }
-        
+
         // Refresh UI
         bookingsTable.refresh();
         guidesTable.refresh();
         updateAnalytics();
-        
+
         double commission = selectedGuide.calculateCommission(selectedBooking.getTotalPrice());
         DialogUtils.showInfo("Success", "Guide assigned successfully!\n" +
-            "Guide: " + selectedGuide.getFullName() + "\n" +
-            "Commission: $" + String.format("%.2f", commission) + " (30%)\n" +
-            "Total Earnings: $" + String.format("%.2f", selectedGuide.getTotalEarnings()));
+                "Guide: " + selectedGuide.getFullName() + "\n" +
+                "Commission: $" + String.format("%.2f", commission) + " (30%)\n" +
+                "Total Earnings: $" + String.format("%.2f", selectedGuide.getTotalEarnings()));
     }
     
     @FXML

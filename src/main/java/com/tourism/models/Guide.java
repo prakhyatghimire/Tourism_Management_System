@@ -3,7 +3,6 @@ package com.tourism.models;
 import java.util.ArrayList;
 import java.util.List;
 
-// Guide class inheriting from Person
 public class Guide extends Person {
     private List<String> languages;
     private int experienceYears;
@@ -11,106 +10,190 @@ public class Guide extends Person {
     private double totalEarnings;
     private List<Booking> assignedBookings;
     private boolean isAvailable;
-    
-    public Guide(String username, String password, String fullName, String email, String phone, 
+    private String bio;
+    private String profileImagePath;
+
+    public Guide(String username, String password, String fullName, String email, String phone,
                  List<String> languages, int experienceYears) {
         super(username, password, fullName, email, phone);
-        
-        // Ensure all collections are properly initialized
+
         this.languages = languages != null ? new ArrayList<>(languages) : new ArrayList<>();
         this.experienceYears = experienceYears;
         this.specializations = new ArrayList<>();
         this.totalEarnings = 0.0;
         this.assignedBookings = new ArrayList<>();
         this.isAvailable = true;
-        
-        System.out.println("Guide created: " + fullName + " with " + this.languages.size() + " languages");
+        this.bio = "Tell us something about yourself!";
+        this.profileImagePath = "";
     }
-    
-    // Encapsulation
-    public List<String> getLanguages() { return new ArrayList<>(languages); }
-    public void addLanguage(String language) { this.languages.add(language); }
-    
-    public int getExperienceYears() { return experienceYears; }
-    public void setExperienceYears(int experienceYears) { this.experienceYears = experienceYears; }
-    
-    public List<String> getSpecializations() { return new ArrayList<>(specializations); }
-    public void addSpecialization(String specialization) { this.specializations.add(specialization); }
-    
-    public double getTotalEarnings() { return totalEarnings; }
-    public void addEarnings(double earnings) { this.totalEarnings += earnings; }
-    public void setTotalEarnings(double totalEarnings) { this.totalEarnings = totalEarnings; }
-    
-    public List<Booking> getAssignedBookings() { return new ArrayList<>(assignedBookings); }
-    public void assignBooking(Booking booking) { 
+
+    // Language methods
+    public List<String> getLanguages() {
+        return new ArrayList<>(languages);
+    }
+
+    public void addLanguage(String language) {
+        if (language != null && !language.trim().isEmpty()) {
+            this.languages.add(language.trim());
+        }
+    }
+
+    public String getLanguagesString() {
+        return String.join(", ", languages);
+    }
+
+    // Experience methods
+    public int getExperienceYears() {
+        return experienceYears;
+    }
+
+    public void setExperienceYears(int experienceYears) {
+        this.experienceYears = Math.max(0, experienceYears);
+    }
+
+    // Specialization methods
+    public List<String> getSpecializations() {
+        return new ArrayList<>(specializations);
+    }
+
+    public void addSpecialization(String specialization) {
+        if (specialization != null && !specialization.trim().isEmpty()) {
+            this.specializations.add(specialization.trim());
+        }
+    }
+
+    // Earnings methods
+    public double getTotalEarnings() {
+        return totalEarnings;
+    }
+
+    public void addEarnings(double earnings) {
+        if (earnings > 0) {
+            this.totalEarnings += earnings;
+        }
+    }
+
+    public void setTotalEarnings(double totalEarnings) {
+        this.totalEarnings = Math.max(0, totalEarnings);
+    }
+
+    // Booking methods
+    public List<Booking> getAssignedBookings() {
+        return new ArrayList<>(assignedBookings);
+    }
+
+    public void assignBooking(Booking booking) {
+        if (booking == null) return;
+
         if (this.assignedBookings == null) {
             this.assignedBookings = new ArrayList<>();
         }
-        
-        // Check if booking is already assigned to avoid duplicates
+
         boolean alreadyAssigned = this.assignedBookings.stream()
-            .anyMatch(b -> b.getBookingId() == booking.getBookingId());
-        
+                .anyMatch(b -> b.getBookingId() == booking.getBookingId());
+
         if (!alreadyAssigned) {
             this.assignedBookings.add(booking);
-            // Calculate commission (30% of booking price)
             double commission = booking.getTotalPrice() * 0.30;
             addEarnings(commission);
-            System.out.println("Guide " + getUsername() + " earned $" + String.format("%.2f", commission) + 
-                " from booking " + booking.getBookingId() + ". Total earnings: $" + String.format("%.2f", totalEarnings));
+            System.out.printf("Guide %s earned $%.2f from booking %d. Total earnings: $%.2f%n",
+                    getUsername(), commission, booking.getBookingId(), totalEarnings);
         }
     }
-    
+
     public void removeBooking(Booking booking) {
-        if (this.assignedBookings != null) {
-            this.assignedBookings.remove(booking);
-            // Remove commission (30% of booking price)
+        if (booking == null || this.assignedBookings == null) return;
+
+        if (this.assignedBookings.remove(booking)) {
             double commission = booking.getTotalPrice() * 0.30;
-            this.totalEarnings -= commission;
-            if (this.totalEarnings < 0) this.totalEarnings = 0;
-            System.out.println("Guide " + getUsername() + " lost $" + String.format("%.2f", commission) + " from cancelled booking " + booking.getBookingId());
+            this.totalEarnings = Math.max(0, this.totalEarnings - commission);
+            System.out.printf("Guide %s lost $%.2f from cancelled booking %d%n",
+                    getUsername(), commission, booking.getBookingId());
         }
     }
-    
-    public boolean isAvailable() { return isAvailable; }
-    public void setAvailable(boolean available) { this.isAvailable = available; }
-    
-    // Polymorphism - Override abstract methods
+
+    // Availability methods
+    public boolean isAvailable() {
+        return isAvailable;
+    }
+
+    public void setAvailable(boolean available) {
+        this.isAvailable = available;
+    }
+
+    public boolean canTakeBooking() {
+        return isAvailable && (assignedBookings == null || assignedBookings.size() < 5);
+    }
+
+    // Bio methods
+    public String getBio() {
+        return bio;
+    }
+
+    public void setBio(String bio) {
+        this.bio = bio != null ? bio : "Tell us something about yourself!";
+    }
+
+    // Profile image methods
+    public String getProfileImagePath() {
+        return profileImagePath;
+    }
+
+    public void setProfileImagePath(String profileImagePath) {
+        this.profileImagePath = profileImagePath != null ? profileImagePath : "";
+    }
+
+    // Role implementation
     @Override
     public String getRole() {
         return "Guide";
     }
-    
+
+    // Dashboard info
     @Override
     public String getDashboardInfo() {
-        return "Welcome Guide " + getFullName() + "!\n" +
-               "Experience: " + experienceYears + " years\n" +
-               "Languages: " + String.join(", ", languages) + "\n" +
-               "Total Earnings: $" + String.format("%.2f", totalEarnings) + "\n" +
-               "Assigned Bookings: " + assignedBookings.size() + "\n" +
-               "Status: " + (isAvailable ? "Available" : "Busy");
+        return String.format(
+                "Welcome Guide %s!%n" +
+                        "Experience: %d years%n" +
+                        "Languages: %s%n" +
+                        "Total Earnings: $%.2f%n" +
+                        "Assigned Bookings: %d%n" +
+                        "Status: %s%n" +
+                        "%s",
+                getFullName(),
+                experienceYears,
+                getLanguagesString(),
+                totalEarnings,
+                assignedBookings.size(),
+                isAvailable ? "Available" : "Busy",
+                (bio != null && !bio.isEmpty() ? "Bio: " + bio : "")
+        );
     }
-    
-    // Guide-specific methods
+
+    // Commission calculation
     public double calculateCommission(double bookingPrice) {
-        return bookingPrice * 0.30; // 30% commission
+        return Math.max(0, bookingPrice) * 0.30;
     }
-    
-    public boolean canTakeBooking() {
-        return isAvailable && assignedBookings.size() < 5; // Max 5 concurrent bookings
-    }
-    
-    public String getLanguagesString() {
-        return String.join(", ", languages);
-    }
-    
+
     @Override
     public String toString() {
-        return super.toString() + "\n" +
-               "Languages: " + String.join(", ", languages) + "\n" +
-               "Experience: " + experienceYears + " years\n" +
-               "Specializations: " + String.join(", ", specializations) + "\n" +
-               "Total Earnings: $" + String.format("%.2f", totalEarnings) + "\n" +
-               "Available: " + (isAvailable ? "Yes" : "No");
+        return String.format(
+                "%s%n" +
+                        "Languages: %s%n" +
+                        "Experience: %d years%n" +
+                        "Specializations: %s%n" +
+                        "Total Earnings: $%.2f%n" +
+                        "Available: %s%n" +
+                        "Bio: %s%n" +
+                        "Profile Image: %s",
+                super.toString(),
+                String.join(", ", languages),
+                experienceYears,
+                String.join(", ", specializations),
+                totalEarnings,
+                isAvailable ? "Yes" : "No",
+                bio,
+                profileImagePath.isEmpty() ? "Default" : "Custom"
+        );
     }
 }
