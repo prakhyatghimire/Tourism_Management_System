@@ -1,0 +1,40 @@
+Username: ram_guide
+Password: ram123
+Full Name: Ram Bahadur
+Email: ram@guide.com
+Phone: +977-1234567
+Languages: English, Nepali, Hindi
+Experience: 8
+Role: Guide
+Total Earnings: 0.0
+------------------------
+Username: sita_guide
+Password: sita123
+Full Name: Sita Sharma
+Email: sita@guide.com
+Phone: +977-7654321
+Languages: English, Nepali
+Experience: 5
+Role: Guide
+Total Earnings: 0.0
+------------------------
+Username: Prakhyat
+Password: Ghimiew@123
+Full Name: Prakhyat Ghimire
+Email: iamprakhyat@gmail.com
+Phone: 9808829472
+Languages: English
+Experience: 12
+Role: Guide
+Total Earnings: 0.0
+------------------------
+Username: prakhyat
+Password: 123456789
+Full Name: prakhyat h
+Email: sfsd@gmail.com
+Phone: 9808829472
+Languages: E
+Experience: 13
+Role: Guide
+Total Earnings: 0.0
+------------------------
