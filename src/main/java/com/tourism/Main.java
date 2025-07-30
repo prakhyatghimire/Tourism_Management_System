@@ -20,7 +20,7 @@ public class Main extends Application {
         FileHandler.initializeDataFiles();
         
         FXMLLoader loader = new FXMLLoader(getClass().getResource("/fxml/login.fxml"));
-        Scene scene = new Scene(loader.load(), 1920, 1080);
+        Scene scene = new Scene(loader.load(), 1940, 1000);
         
         primaryStage.setTitle("Journey - Nepal Tourism System");
         primaryStage.setScene(scene);

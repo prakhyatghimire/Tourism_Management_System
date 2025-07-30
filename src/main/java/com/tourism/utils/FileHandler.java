@@ -8,10 +8,10 @@ import java.util.stream.Collectors;
 
 public class FileHandler {
     private static final String DATA_DIR = "data/";
-    private static final String TOURISTS_FILE = DATA_DIR + "tourists.dat";
-    private static final String GUIDES_FILE = DATA_DIR + "guides.dat";
-    private static final String ATTRACTIONS_FILE = DATA_DIR + "attractions.dat";
-    private static final String BOOKINGS_FILE = DATA_DIR + "bookings.dat";
+    private static final String TOURISTS_FILE = DATA_DIR + "tourists.txt";
+    private static final String GUIDES_FILE = DATA_DIR + "guides.txt";
+    private static final String ATTRACTIONS_FILE = DATA_DIR + "attractions.txt";
+    private static final String BOOKINGS_FILE = DATA_DIR + "bookings.txt";
     private static final String SEPARATOR = "%%%";
 
     // Initialize data directory and default data
@@ -33,11 +33,11 @@ public class FileHandler {
     }
 
     // ================= Tourist Operations =================
-    public static void saveTourist(Tourist tourist) {
+    public static boolean saveTourist(Tourist tourist) {
         List<Tourist> tourists = loadTourists();
         tourists.removeIf(t -> t.getUsername().equals(tourist.getUsername()));
         tourists.add(tourist);
-        saveAllTourists(tourists);
+        return saveAllTourists(tourists);
     }
 
     public static List<Tourist> loadTourists() {
@@ -46,28 +46,55 @@ public class FileHandler {
             return tourists;
         }
 
-        try (ObjectInputStream ois = new ObjectInputStream(new FileInputStream(TOURISTS_FILE))) {
-            tourists = (List<Tourist>) ois.readObject();
+        try (BufferedReader reader = new BufferedReader(new FileReader(TOURISTS_FILE))) {
+            String line;
+            while ((line = reader.readLine()) != null) {
+                String[] parts = line.split(SEPARATOR);
+                if (parts.length == 6) {
+                    Tourist tourist = new Tourist(
+                            parts[0], // username
+                            parts[1], // password
+                            parts[2], // fullName
+                            parts[3], // email
+                            parts[4], // phone
+                            parts[5]  // nationality
+                    );
+                    tourists.add(tourist);
+                }
+            }
         } catch (Exception e) {
             System.err.println("Error loading tourists: " + e.getMessage());
         }
         return tourists;
     }
 
-    private static void saveAllTourists(List<Tourist> tourists) {
-        try (ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(TOURISTS_FILE))) {
-            oos.writeObject(tourists);
+    private static boolean saveAllTourists(List<Tourist> tourists) {
+        try (BufferedWriter writer = new BufferedWriter(new FileWriter(TOURISTS_FILE))) {
+            for (Tourist tourist : tourists) {
+                String line = String.join(SEPARATOR,
+                        tourist.getUsername(),
+                        tourist.getPassword(),
+                        tourist.getFullName(),
+                        tourist.getEmail(),
+                        tourist.getPhone(),
+                        tourist.getNationality()
+                );
+                writer.write(line);
+                writer.newLine();
+            }
+            return true;
         } catch (Exception e) {
             System.err.println("Error saving tourists: " + e.getMessage());
+            return false;
         }
     }
 
     // ================= Guide Operations =================
-    public static void saveGuide(Guide guide) {
+    public static boolean saveGuide(Guide guide) {
         List<Guide> guides = loadGuides();
         guides.removeIf(g -> g.getUsername().equals(guide.getUsername()));
         guides.add(guide);
-        saveAllGuides(guides);
+        return saveAllGuides(guides);
     }
 
     public static List<Guide> loadGuides() {
@@ -76,28 +103,60 @@ public class FileHandler {
             return guides;
         }
 
-        try (ObjectInputStream ois = new ObjectInputStream(new FileInputStream(GUIDES_FILE))) {
-            guides = (List<Guide>) ois.readObject();
+        try (BufferedReader reader = new BufferedReader(new FileReader(GUIDES_FILE))) {
+            String line;
+            while ((line = reader.readLine()) != null) {
+                String[] parts = line.split(SEPARATOR);
+                if (parts.length == 7) {
+                    List<String> languages = Arrays.asList(parts[5].split(","));
+                    int experienceYears = Integer.parseInt(parts[6]);
+
+                    Guide guide = new Guide(
+                            parts[0], // username
+                            parts[1], // password
+                            parts[2], // fullName
+                            parts[3], // email
+                            parts[4], // phone
+                            languages,
+                            experienceYears
+                    );
+                    guides.add(guide);
+                }
+            }
         } catch (Exception e) {
             System.err.println("Error loading guides: " + e.getMessage());
         }
         return guides;
     }
 
-    public static void saveAllGuides(List<Guide> guides) {
-        try (ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(GUIDES_FILE))) {
-            oos.writeObject(guides);
+    public static boolean saveAllGuides(List<Guide> guides) {
+        try (BufferedWriter writer = new BufferedWriter(new FileWriter(GUIDES_FILE))) {
+            for (Guide guide : guides) {
+                String line = String.join(SEPARATOR,
+                        guide.getUsername(),
+                        guide.getPassword(),
+                        guide.getFullName(),
+                        guide.getEmail(),
+                        guide.getPhone(),
+                        String.join(",", guide.getLanguages()),
+                        String.valueOf(guide.getExperienceYears())
+                );
+                writer.write(line);
+                writer.newLine();
+            }
+            return true;
         } catch (Exception e) {
             System.err.println("Error saving guides: " + e.getMessage());
+            return false;
         }
     }
 
     // ================= Attraction Operations =================
-    public static void saveAttraction(Attraction attraction) {
+    public static boolean saveAttraction(Attraction attraction) {
         List<Attraction> attractions = loadAttractions();
         attractions.removeIf(a -> a.getName().equals(attraction.getName()));
         attractions.add(attraction);
-        saveAllAttractions(attractions);
+        return saveAllAttractions(attractions);
     }
 
     public static List<Attraction> loadAttractions() {
@@ -106,28 +165,53 @@ public class FileHandler {
             return attractions;
         }
 
-        try (ObjectInputStream ois = new ObjectInputStream(new FileInputStream(ATTRACTIONS_FILE))) {
-            attractions = (List<Attraction>) ois.readObject();
+        try (BufferedReader reader = new BufferedReader(new FileReader(ATTRACTIONS_FILE))) {
+            String line;
+            while ((line = reader.readLine()) != null) {
+                String[] parts = line.split(SEPARATOR);
+                if (parts.length == 5) {
+                    Attraction attraction = new Attraction(
+                            parts[0], // name
+                            parts[1], // location
+                            parts[2], // difficulty
+                            parts[3], // priceCategory
+                            Double.parseDouble(parts[4]) // price
+                    );
+                    attractions.add(attraction);
+                }
+            }
         } catch (Exception e) {
             System.err.println("Error loading attractions: " + e.getMessage());
         }
         return attractions;
     }
 
-    private static void saveAllAttractions(List<Attraction> attractions) {
-        try (ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(ATTRACTIONS_FILE))) {
-            oos.writeObject(attractions);
+    private static boolean saveAllAttractions(List<Attraction> attractions) {
+        try (BufferedWriter writer = new BufferedWriter(new FileWriter(ATTRACTIONS_FILE))) {
+            for (Attraction attraction : attractions) {
+                String line = String.join(SEPARATOR,
+                        attraction.getName(),
+                        attraction.getLocation(),
+                        attraction.getAltitudeLevel(),
+                        attraction.getDifficulty(),
+                        String.valueOf(attraction.getBasePrice())
+                );
+                writer.write(line);
+                writer.newLine();
+            }
+            return true;
         } catch (Exception e) {
             System.err.println("Error saving attractions: " + e.getMessage());
+            return false;
         }
     }
 
     // ================= Booking Operations =================
-    public static void saveBooking(Booking booking) {
+    public static boolean saveBooking(Booking booking) {
         List<Booking> bookings = loadBookings();
         bookings.removeIf(b -> b.getBookingId() == booking.getBookingId());
         bookings.add(booking);
-        saveAllBookings(bookings);
+        return saveAllBookings(bookings);
     }
 
     public static List<Booking> loadBookings() {
@@ -136,43 +220,46 @@ public class FileHandler {
             return bookings;
         }
 
-        try (ObjectInputStream ois = new ObjectInputStream(new FileInputStream(BOOKINGS_FILE))) {
-            List<BookingData> bookingDataList = (List<BookingData>) ois.readObject();
+        List<Attraction> attractions = loadAttractions();
+        List<Guide> guides = loadGuides();
 
-            // Convert BookingData to Booking objects
-            List<Attraction> attractions = loadAttractions();
-            List<Guide> guides = loadGuides();
+        try (BufferedReader reader = new BufferedReader(new FileReader(BOOKINGS_FILE))) {
+            String line;
+            while ((line = reader.readLine()) != null) {
+                String[] parts = line.split(SEPARATOR);
+                if (parts.length >= 8) {
+                    int bookingId = Integer.parseInt(parts[0]);
+                    String touristUsername = parts[1];
+                    String guideUsername = parts[2];
+                    String attractionName = parts[3];
+                    LocalDate trekDate = LocalDate.parse(parts[4]);
+                    String status = parts[5];
+                    double totalPrice = Double.parseDouble(parts[6]);
+                    boolean festivalDiscountApplied = Boolean.parseBoolean(parts[7]);
 
-            for (BookingData data : bookingDataList) {
-                Attraction attraction = attractions.stream()
-                        .filter(a -> a.getName().equals(data.attractionName))
-                        .findFirst()
-                        .orElse(null);
-
-                if (attraction == null) {
-                    System.err.println("Attraction not found: " + data.attractionName);
-                    continue;
-                }
-
-                Booking booking = new Booking(
-                        data.touristUsername,
-                        attraction,
-                        data.trekDate
-                );
-                booking.setBookingId(data.bookingId);
-                booking.setStatus(data.status);
-                booking.setTotalPrice(data.totalPrice);
-                booking.setFestivalDiscountApplied(data.festivalDiscountApplied);
-
-                if (data.guideUsername != null && !data.guideUsername.isEmpty()) {
-                    Guide guide = guides.stream()
-                            .filter(g -> g.getUsername().equals(data.guideUsername))
+                    Attraction attraction = attractions.stream()
+                            .filter(a -> a.getName().equals(attractionName))
                             .findFirst()
                             .orElse(null);
-                    booking.setGuide(guide);
-                }
 
-                bookings.add(booking);
+                    if (attraction == null) continue;
+
+                    Booking booking = new Booking(touristUsername, attraction, trekDate);
+                    booking.setBookingId(bookingId);
+                    booking.setStatus(status);
+                    booking.setTotalPrice(totalPrice);
+                    booking.setFestivalDiscountApplied(festivalDiscountApplied);
+
+                    if (guideUsername != null && !guideUsername.isEmpty()) {
+                        Guide guide = guides.stream()
+                                .filter(g -> g.getUsername().equals(guideUsername))
+                                .findFirst()
+                                .orElse(null);
+                        booking.setGuide(guide);
+                    }
+
+                    bookings.add(booking);
+                }
             }
         } catch (Exception e) {
             System.err.println("Error loading bookings: " + e.getMessage());
@@ -180,51 +267,26 @@ public class FileHandler {
         return bookings;
     }
 
-    public static void saveAllBookings(List<Booking> bookings) {
-        // Convert to BookingData for serialization
-        List<BookingData> bookingDataList = bookings.stream()
-                .map(b -> new BookingData(
-                        b.getBookingId(),
-                        b.getTouristUsername(),
-                        b.getGuide() != null ? b.getGuide().getUsername() : null,
-                        b.getAttraction().getName(),
-                        b.getTrekDate(),
-                        b.getStatus(),
-                        b.getTotalPrice(),
-                        b.isFestivalDiscountApplied()
-                ))
-                .collect(Collectors.toList());
-
-        try (ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(BOOKINGS_FILE))) {
-            oos.writeObject(bookingDataList);
+    public static boolean saveAllBookings(List<Booking> bookings) {
+        try (BufferedWriter writer = new BufferedWriter(new FileWriter(BOOKINGS_FILE))) {
+            for (Booking booking : bookings) {
+                String line = String.join(SEPARATOR,
+                        String.valueOf(booking.getBookingId()),
+                        booking.getTouristUsername(),
+                        booking.getGuide() != null ? booking.getGuide().getUsername() : "",
+                        booking.getAttraction().getName(),
+                        booking.getTrekDate().toString(),
+                        booking.getStatus(),
+                        String.valueOf(booking.getTotalPrice()),
+                        String.valueOf(booking.isFestivalDiscountApplied())
+                );
+                writer.write(line);
+                writer.newLine();
+            }
+            return true;
         } catch (Exception e) {
             System.err.println("Error saving bookings: " + e.getMessage());
-        }
-    }
-
-    // Helper class for booking serialization
-    private static class BookingData implements Serializable {
-        private static final long serialVersionUID = 1L;
-        int bookingId;
-        String touristUsername;
-        String guideUsername;
-        String attractionName;
-        LocalDate trekDate;
-        String status;
-        double totalPrice;
-        boolean festivalDiscountApplied;
-
-        public BookingData(int bookingId, String touristUsername, String guideUsername,
-                           String attractionName, LocalDate trekDate, String status,
-                           double totalPrice, boolean festivalDiscountApplied) {
-            this.bookingId = bookingId;
-            this.touristUsername = touristUsername;
-            this.guideUsername = guideUsername;
-            this.attractionName = attractionName;
-            this.trekDate = trekDate;
-            this.status = status;
-            this.totalPrice = totalPrice;
-            this.festivalDiscountApplied = festivalDiscountApplied;
+            return false;
         }
     }
 

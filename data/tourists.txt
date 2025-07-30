@@ -1,9 +1,0 @@
-Username: pratik
-Password: 123456789
-Full Name: plg k
-Email: a@gmiail.com
-Phone: 9808829472
-Nationality: India
-Role: Tourist
-Total Spent: 0.0
-------------------------

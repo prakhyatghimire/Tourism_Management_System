@@ -3,7 +3,7 @@ package com.tourism.models;
 import java.io.Serializable;
 
 // Attraction class demonstrating encapsulation
-public class Attraction  implements Serializable {
+public class Attraction {
     private String name;
     private String location;
     private String altitudeLevel; // "High" or "Low"
@@ -13,7 +13,7 @@ public class Attraction  implements Serializable {
     private int maxCapacity;
     private int currentBookings;
     private boolean isActive;
-    private static final long serialVersionUID = 1L;
+   ;
     
     // Constructor
     public Attraction(String name, String location, String altitudeLevel, String difficulty, double basePrice) {

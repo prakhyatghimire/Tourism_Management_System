@@ -1,9 +1,10 @@
 package com.tourism.models;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
-public class Guide extends Person {
+public class Guide extends Person  {
     private List<String> languages;
     private int experienceYears;
     private List<String> specializations;

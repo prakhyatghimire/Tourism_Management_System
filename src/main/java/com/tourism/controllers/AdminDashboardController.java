@@ -164,29 +164,31 @@ public class AdminDashboardController {
     @FXML
     private void handleAddGuide() {
         if (!validateGuideFields()) return;
-        
+
         try {
             List<String> languages = Arrays.asList(guideLanguagesField.getText().trim().split(",\\s*"));
             Guide newGuide = new Guide(
-                guideUsernameField.getText().trim(),
-                guidePasswordField.getText().trim(),
-                guideNameField.getText().trim(),
-                guideEmailField.getText().trim(),
-                guidePhoneField.getText().trim(),
-                languages,
-                Integer.parseInt(guideExperienceField.getText().trim())
+                    guideUsernameField.getText().trim(),
+                    guidePasswordField.getText().trim(),
+                    guideNameField.getText().trim(),
+                    guideEmailField.getText().trim(),
+                    guidePhoneField.getText().trim(),
+                    languages,
+                    Integer.parseInt(guideExperienceField.getText().trim())
             );
-            
-            FileHandler.saveGuide(newGuide);
-            guides.add(newGuide);
-            clearGuideFields();
-            DialogUtils.showInfo("Success", "Guide added successfully!");
-            
+
+            if (FileHandler.saveGuide(newGuide)) {
+                guides.add(newGuide);
+                clearGuideFields();
+                DialogUtils.showInfo("Success", "Guide added successfully!");
+            } else {
+                DialogUtils.showError("Error", "Failed to save guide data to file!");
+            }
         } catch (Exception e) {
-            DialogUtils.showError("Error", "Failed to add guide!");
+            DialogUtils.showError("Error", "Failed to add guide: " + e.getMessage());
+            e.printStackTrace();
         }
     }
-    
     @FXML
     private void handleUpdateGuide() {
         Guide selectedGuide = guidesTable.getSelectionModel().getSelectedItem();

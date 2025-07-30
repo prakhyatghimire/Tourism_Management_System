@@ -62,8 +62,9 @@
                         <!-- Password -->
                         <VBox spacing="6">
                            <children>
-                              <PasswordField fx:id="passwordField" promptText="Enter password" style="-fx-pref-height: 45;                                                     -fx-font-size: 14px;                                                     -fx-background-radius: 8;                                                     -fx-border-radius: 8;                                                     -fx-background-color: #f9f9f9;                                                     -fx-border-color: #ddd;                                                     -fx-border-width: 1;                                                     -fx-padding: 0 10;" />
                               <Label fx:id="passwordLabel" style="-fx-font-weight: bold; -fx-font-size: 13px; -fx-text-fill: #444;" text="Password:" />
+                              <PasswordField fx:id="passwordField" promptText="Enter password" style="-fx-pref-height: 45;                                                     -fx-font-size: 14px;                                                     -fx-background-radius: 8;                                                     -fx-border-radius: 8;                                                     -fx-background-color: #f9f9f9;                                                     -fx-border-color: #ddd;                                                     -fx-border-width: 1;                                                     -fx-padding: 0 10;" />
+
                            </children>
                         </VBox>
 
