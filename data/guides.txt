@@ -1,0 +1,3 @@
+guide1%%%password%%%Ram Sharma%%%ram@guide.com%%%1234567890%%%English,Nepali%%%5
+guide2%%%password%%%Sita Gurung%%%sita@guide.com%%%9876543210%%%English,Hindi%%%3
+Prakhyat%%%Password@123%%%Prakhyat Ghimire%%%prakhyat123@gmail.com%%%9808829472%%%English%%%3
